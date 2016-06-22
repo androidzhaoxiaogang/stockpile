@@ -1,0 +1,95 @@
+description = "Inventory Service"
+group = 'com.capitalone.nsb'
+version = 'git rev-parse HEAD'.execute().text.trim()
+
+buildscript {
+    ext {
+        springBootVersion = '1.3.5.RELEASE'
+        springloadedVersion = '1.2.5.RELEASE'
+        
+        branch = 'git remote'.execute().text.trim() + "/" + 'git symbolic-ref --short HEAD'.execute().text.trim()
+    }
+    repositories {
+    	mavenLocal()
+    	mavenCentral()
+    	maven { url 'http://repo.spring.io/libs-release' }
+    
+	}
+    
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath("org.springframework:springloaded:${springloadedVersion}")
+        classpath "net.saliman:gradle-cobertura-plugin:2.3.1"
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'application'
+apply plugin: 'spring-boot'
+apply plugin: 'net.saliman.cobertura'
+
+mainClassName = "com.capitalone.nsb.marketing.stockpile.Application"
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+// handles resource filtering (placeholder replacement)
+processResources {
+    filesMatching("**/*.properties") {
+        expand(project.properties)
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url 'http://repo.spring.io/libs-release' }
+    
+}
+
+dependencies {
+    compile group: 'com.capitalone.nsb', name: 'marketing-commons', version:'1.0.0'
+
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: springBootVersion
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: springBootVersion
+    compile group: 'org.springframework.cloud', name: 'spring-cloud-starter-consul-config', version: '1.0.0.M2'
+    compile group: 'org.springframework.cloud', name: 'spring-cloud-consul-discovery', version: '1.0.0.M2'
+    compile 'commons-lang:commons-lang:2.6' // consul discovery depends on this version of commons, do not upgrade
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.7.0'
+    compile 'org.apache.httpcomponents:httpclient:4.5.1'
+    compile 'org.apache.httpcomponents:httpmime:4.5.1'
+    compile 'io.springfox:springfox-swagger2:2.4.0'
+    compile 'io.springfox:springfox-swagger-ui:2.4.0'
+    compile 'io.springfox:springfox-bean-validators:2.4.0'
+
+    testCompile(group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: springBootVersion) {
+        exclude(module: 'commons-logging')
+    }
+    testCompile group: 'org.testng', name: 'testng', version:'6.9.9'
+}
+
+tasks.withType(org.springframework.boot.gradle.run.BootRunTask) {
+    systemProperties = System.properties
+    systemProperty ('spring.cloud.consul.host', 'localhost')
+}
+
+jar {
+    baseName = "stockpile"
+    version = ""
+}
+
+test {
+    useTestNG()
+    include "**/*Test.class"
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.13'
+}
+
+cobertura {
+    coverageFormats = ['html', 'xml']
+    coverageIgnoreTrivial = true
+    coverageIgnores = ['org.slf4j.Logger.*']
+    coverageReportDir = new File("$buildDir/reports/cobertura")
+}

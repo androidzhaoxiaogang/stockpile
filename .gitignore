@@ -1,0 +1,17 @@
+# Intellij\
+.idea/*
+*.iml
+*.iws
+
+# Mac
+.DS_Store
+
+# Gradle files
+.gradle/
+build/
+
+# Consul
+personal.init-consul.sh
+
+# Logging (so you can't accidentally check-in logging config)
+src/main/resources/logback.xml
